@@ -58,7 +58,50 @@ void update_flags(uint16_t r0){
     }
 }
 
+uint16_t sign_extend(uint16_t x, int bit_count)
+{
+    if ((x >> (bit_count - 1)) & 1) {
+        x |= (0xFFFF << bit_count);
+    }
+    return x;
+}
+
+void op_add(uint16_t instr){
+    // register to store results
+    uint16_t dr = (instr >> 9) & 0x7;
+    //sr1 register
+    uint16_t sr1 = (instr >> 6) & 0x7;
+    //imm flag
+    uint16_t imm_flag = instr >> 5;
+    if(imm_flag){
+        uint16_t imm = instr  & 0x1f;
+        reg[dr] = reg[sr1] + sign_extend(imm,5);
+    }else{
+        uint16_t sr2 =  instr & 0x7;
+        reg[dr] = reg[sr1] + reg[sr2];
+    }
+    update_flags(dr);
+}
+
+uint16_t mem_read(uint16_t pc){
+    // todo implement mem read
+    uint16_t instr = memory[pc];
+    return instr;
+}
+
 int main(){
-    return -1;
+    uint16_t instr = mem_read(reg[R_PC]++);
+    uint16_t op = instr >> 12;
+    switch (op)
+    {
+    case OP_ADD:
+        op_add(instr);
+        break;
+    
+    default:
+        //todo implement bad op code
+        break;
+    }
+    return 0;
 }
 
