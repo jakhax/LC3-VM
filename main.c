@@ -48,6 +48,17 @@ enum {
     FLAG_NEG = 1 << 2, 
 };
 
+void update_flags(uint16_t r0){
+    if(reg[r0]>>15 == 1){
+        reg[R_COND] = FLAG_NEG;
+    }else if(reg[r0] == 0){
+        reg[R_COND] = FLAG_ZRO;
+    }else{
+        reg[R_COND] = FLAG_POS;
+    }
+}
+
 int main(){
     return -1;
 }
+
