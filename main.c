@@ -72,7 +72,7 @@ void op_add(uint16_t instr){
     //sr1 register
     uint16_t sr1 = (instr >> 6) & 0x7;
     //imm flag
-    uint16_t imm_flag = instr >> 5;
+    uint16_t imm_flag = (instr >> 5) & 0x1;
     if(imm_flag){
         uint16_t imm = instr  & 0x1f;
         reg[dr] = reg[sr1] + sign_extend(imm,5);
@@ -80,6 +80,19 @@ void op_add(uint16_t instr){
         uint16_t sr2 =  instr & 0x7;
         reg[dr] = reg[sr1] + reg[sr2];
     }
+    update_flags(dr);
+}
+
+void op_and(uint16_t instr){
+    uint16_t dr = (instr >> 9) & 0x7;
+    uint16_t sr1 = (instr >> 6) & 0x7;
+    uint16_t imm_flag = (instr >> 5) & 0x1;
+    if (imm_flag){
+        uint16_t imm = instr & 0x1f;
+        reg[dr] = reg[sr1] & sign_extend(imm,5);
+    }else{
+        reg[dr] = reg[sr1] & reg[(instr & 0x7)];
+    } 
     update_flags(dr);
 }
 
