@@ -109,6 +109,18 @@ uint16_t op_jmp(uint16_t ins){
     reg[R_PC] = reg[r];
 }
 
+uint16_t op_jsr(uint16_t ins){
+    reg[R_R7] = reg[R_PC];
+    uint16_t f = (ins >> 11) & 1;
+    if(f){
+        // jsr
+        reg[R_PC] += sign_extend((ins & 0x7ff),11);
+    }else{
+        // jssr
+        reg[R_PC] = (ins >> 6) & 0x7;
+    }
+}
+
 uint16_t mem_read(uint16_t pc){
     // todo implement mem read
     uint16_t instr = memory[pc];
@@ -131,6 +143,9 @@ int main(){
         break;
     case OP_JMP:
         op_jmp(instr);
+        break;
+    case OP_JSR:
+        op_jsr(instr);
         break;
     default:
         //todo implement bad op code
