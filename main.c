@@ -96,6 +96,14 @@ void op_and(uint16_t instr){
     update_flags(dr);
 }
 
+uint16_t op_br(uint16_t ins){
+    uint16_t f = (ins >> 9) & 0x7;
+    uint16_t pc_offset = sign_extend((ins & 0x1ff),9);
+    if(f & reg[R_COND]){
+        reg[R_PC] += pc_offset;
+    }
+}
+
 uint16_t mem_read(uint16_t pc){
     // todo implement mem read
     uint16_t instr = memory[pc];
