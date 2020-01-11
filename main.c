@@ -123,8 +123,15 @@ uint16_t op_jsr(uint16_t ins){
 
 uint16_t op_ld(uint16_t ins){
     uint16_t dr = (ins >> 9) & 0x7;
-    uint16_t addr = sign_extend((ins & 0x1ff),9);
-    reg[dr] = reg[R_PC] + mem_read(addr);
+    uint16_t addr = sign_extend((ins & 0x1ff),9) + reg[R_PC];
+    reg[dr] = mem_read(addr);
+    update_flags(dr);
+}
+
+uint16_t op_ldi(uint16_t ins){
+    uint16_t dr = (ins >> 9) & 0x7;
+    uint16_t addr = sign_extend((ins & 0x1ff),9) + reg[R_PC];
+    reg[dr] = mem_read(mem_read(addr));
     update_flags(dr);
 }
 
@@ -156,6 +163,9 @@ int main(){
         break;
     case OP_LD:
         op_ld(instr);
+        break;
+    case OP_LDI:
+        op_ldi(instr);
         break;
     default:
         //todo implement bad op code
