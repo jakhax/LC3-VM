@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/time.h>
@@ -93,7 +94,37 @@ uint16_t swap16(uint16_t x)
     return (x << 8) | (x >> 8);
 }
 
-int load_program_from_file(char* file){
+uint16_t check_key()
+{
+    fd_set readfds;
+    FD_ZERO(&readfds);
+    FD_SET(STDIN_FILENO, &readfds);
+
+    struct timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0;
+    return select(1, &readfds, NULL, NULL, &timeout) != 0;
+}
+
+
+uint16_t mem_read(uint16_t addr){
+    if(addr == MR_KBSR){
+        if(check_key()){
+            memory[MR_KBSR] = 1 << 15;
+            memory[MR_KBDR] = getchar();
+        }else{
+            memory[MR_KBSR] = 0;
+        }
+    }
+    uint16_t val = memory[addr];
+    return val;
+}
+
+void mem_write(uint16_t addr, uint16_t val){
+    memory[addr] = val;
+}
+
+int load_program_from_file(const char* file){
     FILE* image= fopen(file,"rb");
     if(!image){
         return 0;
@@ -112,22 +143,8 @@ int load_program_from_file(char* file){
     return 1;
 }
 
-uint16_t check_key()
-{
-    fd_set readfds;
-    FD_ZERO(&readfds);
-    FD_SET(STDIN_FILENO, &readfds);
-
-    struct timeval timeout;
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 0;
-    return select(1, &readfds, NULL, NULL, &timeout) != 0;
-}
-
-
-
 void op_add(uint16_t instr){
-    // register to store results
+    // rister to store results
     uint16_t dr = (instr >> 9) & 0x7;
     //sr1 register
     uint16_t sr1 = (instr >> 6) & 0x7;
@@ -273,22 +290,6 @@ void trap_putsp(){
     fflush(stdout);
 }
 
-uint16_t mem_read(uint16_t addr){
-    if(addr == MR_KBSR){
-        if(check_key()){
-            memory[MR_KBSR] = 1 << 15;
-            memory[MR_KBDR] = getchar();
-        }else{
-            memory[MR_KBSR] = 0;
-        }
-    }
-    uint16_t val = memory[addr];
-    return val;
-}
-
-void mem_write(uint16_t addr, uint16_t val){
-    memory[addr] = val;
-}
 
 /* Input Buffering */
 struct termios original_tio;
