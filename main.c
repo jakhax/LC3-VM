@@ -254,6 +254,15 @@ int main(){
                 }
                 fflush(stdout);
                 break;
+            case TRAP_GETC:
+                uint16_t c = (uint16_t)getchar();
+                reg[R_R0] = c;
+                break;
+            case TRAP_OUT:
+                putc((char)reg[R_R0],stdout);
+                fflush(stdout);
+                break;
+
         }
     case OP_RES:
     case OP_RTI:
