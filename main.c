@@ -135,6 +135,13 @@ uint16_t op_ldi(uint16_t ins){
     update_flags(dr);
 }
 
+uint16_t op_ldr(uint16_t ins){
+    uint16_t dr = (ins >> 9) & 0x7;
+    uint16_t addr = reg[(ins>>6) & 0x7] + sign_extend(ins & 0x3f,6);
+    reg[dr] = mem_read(addr);
+    update_flags(dr);
+}
+
 uint16_t mem_read(uint16_t addr){
     // todo implement mem read
     uint16_t instr = memory[addr];
@@ -166,6 +173,9 @@ int main(){
         break;
     case OP_LDI:
         op_ldi(instr);
+        break;
+    case OP_LDR:
+        op_ldr(instr);
         break;
     default:
         //todo implement bad op code
