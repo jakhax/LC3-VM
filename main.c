@@ -190,6 +190,46 @@ void op_str(uint16_t ins){
     mem_write(addr, reg[sr]);
 }
 
+void trap_puts(){
+    uint16_t* c = memory + reg[R_R0];
+    while(*c){
+        putc((char)*c,stdout);
+        ++c;
+    }
+    fflush(stdout);
+}
+
+void trap_getc(){
+    uint16_t c = (uint16_t)getchar();
+    reg[R_R0] = c;
+}
+
+void trap_halt(){
+    puts("HALTING");
+    fflush(stdout);
+}
+
+void trap_out(){
+    putc((char)reg[R_R0],stdout);
+    fflush(stdout);
+}
+
+void trap_putsp(){
+    // 2 chars, in big endian c1 0:8,c2 9:15
+    uint16_t* c = memory + reg[R_R0];
+    while(*c){
+        // c1
+        putc((char)((*c)&0xff),stdout);
+        // c2
+        char c2 = (*c) >> 8;
+        if(c2){
+            putc(c2,stdout);
+        }
+        ++c;
+    } 
+    fflush(stdout);
+}
+
 uint16_t mem_read(uint16_t addr){
     // todo implement mem read
     uint16_t val = memory[addr];
@@ -247,22 +287,20 @@ int main(){
     case OP_TRAP:
         switch(instr & 0xff){
             case TRAP_PUTS:
-                uint16_t* c = memory + reg[R_R0];
-                while(*c){
-                    putc((char)*c,stdout);
-                    ++c;
-                }
-                fflush(stdout);
+                trap_puts();
                 break;
             case TRAP_GETC:
-                uint16_t c = (uint16_t)getchar();
-                reg[R_R0] = c;
+                trap_getc();
                 break;
             case TRAP_OUT:
-                putc((char)reg[R_R0],stdout);
-                fflush(stdout);
+                trap_out();
                 break;
-
+            case TRAP_PUTSP:
+                trap_putsp();
+                break;
+            case TRAP_HALT:
+                trap_halt();
+                break;
         }
     case OP_RES:
     case OP_RTI:
