@@ -104,6 +104,11 @@ uint16_t op_br(uint16_t ins){
     }
 }
 
+uint16_t op_jmp(uint16_t ins){
+    uint16_t r =  (ins >> 6) & 0x7;
+    reg[R_PC] = reg[r];
+}
+
 uint16_t mem_read(uint16_t pc){
     // todo implement mem read
     uint16_t instr = memory[pc];
@@ -118,7 +123,15 @@ int main(){
     case OP_ADD:
         op_add(instr);
         break;
-    
+    case OP_AND:
+        op_and(instr);
+        break;
+    case OP_BR:
+        op_br(instr);
+        break;
+    case OP_JMP:
+        op_jmp(instr);
+        break;
     default:
         //todo implement bad op code
         break;
