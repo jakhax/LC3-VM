@@ -142,6 +142,13 @@ uint16_t op_ldr(uint16_t ins){
     update_flags(dr);
 }
 
+uint16_t op_lea(uint16_t ins){
+    uint16_t dr = (ins >> 9) & 0x7;
+    uint16_t addr = sign_extend(ins & 0x1ff,9) + reg[R_PC];
+    reg[dr] = addr;
+    update_flags(dr);
+}
+
 uint16_t mem_read(uint16_t addr){
     // todo implement mem read
     uint16_t instr = memory[addr];
@@ -176,6 +183,9 @@ int main(){
         break;
     case OP_LDR:
         op_ldr(instr);
+        break;
+    case OP_LEA:
+        op_lea(instr);
         break;
     default:
         //todo implement bad op code
