@@ -121,9 +121,16 @@ uint16_t op_jsr(uint16_t ins){
     }
 }
 
-uint16_t mem_read(uint16_t pc){
+uint16_t op_ld(uint16_t ins){
+    uint16_t dr = (ins >> 9) & 0x7;
+    uint16_t addr = sign_extend((ins & 0x1ff),9);
+    reg[dr] = reg[R_PC] + mem_read(addr);
+    update_flags(dr);
+}
+
+uint16_t mem_read(uint16_t addr){
     // todo implement mem read
-    uint16_t instr = memory[pc];
+    uint16_t instr = memory[addr];
     return instr;
 }
 
@@ -146,6 +153,9 @@ int main(){
         break;
     case OP_JSR:
         op_jsr(instr);
+        break;
+    case OP_LD:
+        op_ld(instr);
         break;
     default:
         //todo implement bad op code
