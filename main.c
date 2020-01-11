@@ -156,10 +156,22 @@ uint16_t op_not(uint16_t ins){
     update_flags(dr);
 }
 
+uint16_t op_st(uint16_t ins){
+    uint16_t sr = (ins >> 9) & 0x7;
+    uint16_t addr = sign_extend(ins & 0x1ff, 9) + reg[R_PC];
+    uint16_t val = reg[sr];
+    mem_write(addr,val);
+
+}
+
 uint16_t mem_read(uint16_t addr){
     // todo implement mem read
-    uint16_t instr = memory[addr];
-    return instr;
+    uint16_t val = memory[addr];
+    return val;
+}
+
+void mem_write(uint16_t addr, uint16_t val){
+    memory[addr] = val;
 }
 
 int main(){
@@ -197,8 +209,13 @@ int main(){
     case OP_NOT:
         op_not(instr);
         break;
+    case OP_ST:
+        op_st(instr);
+        break;
+    case OP_RES:
+    case OP_RTI:
     default:
-        //todo implement bad op code
+        abort();
         break;
     }
     return 0;
