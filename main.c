@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <sys/termios.h>
+#include <signal.h>
 
 // memory
 uint16_t memory[UINT16_MAX];
@@ -91,7 +93,11 @@ uint16_t swap16(uint16_t x)
     return (x << 8) | (x >> 8);
 }
 
-void load_program_from_image(FILE* image){
+int load_program_from_file(char* file){
+    FILE* image= fopen(file,"rb");
+    if(!image){
+        return 0;
+    }
     uint16_t origin;
     fread(&origin,sizeof(origin),1,image);
     origin = swap16(origin);
@@ -103,14 +109,6 @@ void load_program_from_image(FILE* image){
         *i = swap16(*i);
         ++i;
     }
-}
-
-int load_image_from_file(char* f){
-    FILE* image= fopen(f,"rb");
-    if(!image){
-        return 0;
-    }
-    load_program_from_image(image);
     return 1;
 }
 
@@ -254,11 +252,6 @@ void trap_getc(){
     reg[R_R0] = c;
 }
 
-void trap_halt(){
-    puts("HALTING");
-    fflush(stdout);
-}
-
 void trap_out(){
     putc((char)reg[R_R0],stdout);
     fflush(stdout);
@@ -297,74 +290,120 @@ void mem_write(uint16_t addr, uint16_t val){
     memory[addr] = val;
 }
 
-int main(){
-    uint16_t instr = mem_read(reg[R_PC]++);
-    uint16_t op = instr >> 12;
-    switch (op)
-    {
-    case OP_ADD:
-        op_add(instr);
-        break;
-    case OP_AND:
-        op_and(instr);
-        break;
-    case OP_BR:
-        op_br(instr);
-        break;
-    case OP_JMP:
-        op_jmp(instr);
-        break;
-    case OP_JSR:
-        op_jsr(instr);
-        break;
-    case OP_LD:
-        op_ld(instr);
-        break;
-    case OP_LDI:
-        op_ldi(instr);
-        break;
-    case OP_LDR:
-        op_ldr(instr);
-        break;
-    case OP_LEA:
-        op_lea(instr);
-        break;
-    case OP_NOT:
-        op_not(instr);
-        break;
-    case OP_ST:
-        op_st(instr);
-        break;
-    case OP_STI:
-        op_sti(instr);
-        break;
-    case OP_STR:
-        op_str(instr);
-        break;
-    case OP_TRAP:
-        switch(instr & 0xff){
-            case TRAP_PUTS:
-                trap_puts();
-                break;
-            case TRAP_GETC:
-                trap_getc();
-                break;
-            case TRAP_OUT:
-                trap_out();
-                break;
-            case TRAP_PUTSP:
-                trap_putsp();
-                break;
-            case TRAP_HALT:
-                trap_halt();
-                break;
-        }
-    case OP_RES:
-    case OP_RTI:
-    default:
-        abort();
-        break;
+/* Input Buffering */
+struct termios original_tio;
+
+void disable_input_buffering()
+{
+    tcgetattr(STDIN_FILENO, &original_tio);
+    struct termios new_tio = original_tio;
+    new_tio.c_lflag &= ~ICANON & ~ECHO;
+    tcsetattr(STDIN_FILENO, TCSANOW, &new_tio);
+}
+
+void restore_input_buffering()
+{
+    tcsetattr(STDIN_FILENO, TCSANOW, &original_tio);
+}
+
+void handle_interrupt(int signal)
+{
+    restore_input_buffering();
+    printf("\n");
+    exit(-2);
+}
+
+void setup(){
+    signal(SIGINT, handle_interrupt);
+    disable_input_buffering();
+}
+
+
+int main(int argc, const char* argv[]){
+    if(argc != 2){
+        printf("Usage: ./lc3 <program>");
+        exit(2);
     }
+    if(!load_program_from_file(argv[1])){
+        printf("Unable to load program from file %s",argv[2]);
+        exit(2);
+    }
+
+    setup();
+    int running = 1;
+    while (running)
+    {
+        uint16_t instr = mem_read(reg[R_PC]++);
+        uint16_t op = instr >> 12;
+        switch (op)
+        {
+        case OP_ADD:
+            op_add(instr);
+            break;
+        case OP_AND:
+            op_and(instr);
+            break;
+        case OP_BR:
+            op_br(instr);
+            break;
+        case OP_JMP:
+            op_jmp(instr);
+            break;
+        case OP_JSR:
+            op_jsr(instr);
+            break;
+        case OP_LD:
+            op_ld(instr);
+            break;
+        case OP_LDI:
+            op_ldi(instr);
+            break;
+        case OP_LDR:
+            op_ldr(instr);
+            break;
+        case OP_LEA:
+            op_lea(instr);
+            break;
+        case OP_NOT:
+            op_not(instr);
+            break;
+        case OP_ST:
+            op_st(instr);
+            break;
+        case OP_STI:
+            op_sti(instr);
+            break;
+        case OP_STR:
+            op_str(instr);
+            break;
+        case OP_TRAP:
+            switch(instr & 0xff){
+                case TRAP_PUTS:
+                    trap_puts();
+                    break;
+                case TRAP_GETC:
+                    trap_getc();
+                    break;
+                case TRAP_OUT:
+                    trap_out();
+                    break;
+                case TRAP_PUTSP:
+                    trap_putsp();
+                    break;
+                case TRAP_HALT:
+                    puts("HALTING");
+                    fflush(stdout);
+                    running = 0;
+                    break;
+            }
+        case OP_RES:
+        case OP_RTI:
+        default:
+            abort();
+            break;
+        }
+    }
+    restore_input_buffering();
     return 0;
 }
 
