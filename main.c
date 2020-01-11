@@ -78,6 +78,27 @@ uint16_t sign_extend(uint16_t x, int bit_count)
     return x;
 }
 
+uint16_t swap16(uint16_t x)
+{
+    return (x << 8) | (x >> 8);
+}
+
+void load_program_from_file(FILE* file){
+    uint16_t origin;
+    fread(&origin,sizeof(origin),1,file);
+    origin = swap16(origin);
+    uint16_t max_read = UINT16_MAX - origin;
+    uint16_t* i = memory + origin;
+    size_t read = fread(i,sizeof(uint16_t),max_read,file);
+    // swap
+    while(read-- > 0){
+        *i = swap16(*i);
+        ++i;
+    }
+
+}
+
+
 void op_add(uint16_t instr){
     // register to store results
     uint16_t dr = (instr >> 9) & 0x7;
