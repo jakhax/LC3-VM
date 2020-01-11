@@ -96,7 +96,7 @@ void op_and(uint16_t instr){
     update_flags(dr);
 }
 
-uint16_t op_br(uint16_t ins){
+void op_br(uint16_t ins){
     uint16_t f = (ins >> 9) & 0x7;
     uint16_t pc_offset = sign_extend((ins & 0x1ff),9);
     if(f & reg[R_COND]){
@@ -104,12 +104,12 @@ uint16_t op_br(uint16_t ins){
     }
 }
 
-uint16_t op_jmp(uint16_t ins){
+void op_jmp(uint16_t ins){
     uint16_t r =  (ins >> 6) & 0x7;
     reg[R_PC] = reg[r];
 }
 
-uint16_t op_jsr(uint16_t ins){
+void op_jsr(uint16_t ins){
     reg[R_R7] = reg[R_PC];
     uint16_t f = (ins >> 11) & 1;
     if(f){
@@ -121,47 +121,54 @@ uint16_t op_jsr(uint16_t ins){
     }
 }
 
-uint16_t op_ld(uint16_t ins){
+void op_ld(uint16_t ins){
     uint16_t dr = (ins >> 9) & 0x7;
     uint16_t addr = sign_extend((ins & 0x1ff),9) + reg[R_PC];
     reg[dr] = mem_read(addr);
     update_flags(dr);
 }
 
-uint16_t op_ldi(uint16_t ins){
+void op_ldi(uint16_t ins){
     uint16_t dr = (ins >> 9) & 0x7;
     uint16_t addr = sign_extend((ins & 0x1ff),9) + reg[R_PC];
     reg[dr] = mem_read(mem_read(addr));
     update_flags(dr);
 }
 
-uint16_t op_ldr(uint16_t ins){
+void op_ldr(uint16_t ins){
     uint16_t dr = (ins >> 9) & 0x7;
     uint16_t addr = reg[(ins>>6) & 0x7] + sign_extend(ins & 0x3f,6);
     reg[dr] = mem_read(addr);
     update_flags(dr);
 }
 
-uint16_t op_lea(uint16_t ins){
+void op_lea(uint16_t ins){
     uint16_t dr = (ins >> 9) & 0x7;
     uint16_t addr = sign_extend(ins & 0x1ff,9) + reg[R_PC];
     reg[dr] = addr;
     update_flags(dr);
 }
 
-uint16_t op_not(uint16_t ins){
+void op_not(uint16_t ins){
     uint16_t dr = (ins >> 9) & 0x7;
     uint16_t sr = (ins >> 6) & 0x7;
     reg[dr] = ~reg[sr];
     update_flags(dr);
 }
 
-uint16_t op_st(uint16_t ins){
+void op_st(uint16_t ins){
     uint16_t sr = (ins >> 9) & 0x7;
     uint16_t addr = sign_extend(ins & 0x1ff, 9) + reg[R_PC];
     uint16_t val = reg[sr];
     mem_write(addr,val);
 
+}
+
+void op_sti(uint16_t ins){
+    uint16_t sr = (ins >> 9) & 0x7;
+    uint16_t addr = sign_extend(ins & 0x1ff, 9) + reg[R_PC];
+    uint16_t val = reg[sr];
+    mem_write(mem_read(addr),val);
 }
 
 uint16_t mem_read(uint16_t addr){
@@ -211,6 +218,9 @@ int main(){
         break;
     case OP_ST:
         op_st(instr);
+        break;
+    case OP_STI:
+        op_sti(instr);
         break;
     case OP_RES:
     case OP_RTI:
