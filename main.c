@@ -171,6 +171,13 @@ void op_sti(uint16_t ins){
     mem_write(mem_read(addr),val);
 }
 
+void op_str(uint16_t ins){
+    uint16_t sr = (ins >> 9) & 0x7;
+    uint16_t br = (ins >> 6) & 0x7;
+    uint16_t addr = reg[br] + sign_extend(ins & 0x3f,6);
+    mem_write(addr, reg[sr]);
+}
+
 uint16_t mem_read(uint16_t addr){
     // todo implement mem read
     uint16_t val = memory[addr];
@@ -221,6 +228,9 @@ int main(){
         break;
     case OP_STI:
         op_sti(instr);
+        break;
+    case OP_STR:
+        op_str(instr);
         break;
     case OP_RES:
     case OP_RTI:
