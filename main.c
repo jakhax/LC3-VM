@@ -397,6 +397,7 @@ int main(int argc, const char* argv[]){
                     running = 0;
                     break;
             }
+            break;
         case OP_RES:
         case OP_RTI:
         default:
